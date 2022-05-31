@@ -8,6 +8,9 @@ TagManager:
   - Triangle
   - Square
   - Bonus
+  - Logout
+  - client
+  - Scores
   layers:
   - Default
   - TransparentFX

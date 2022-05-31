@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -16,15 +17,35 @@ public class PlayerController : MonoBehaviour
     private float forcePerSec;
     private GameObject ball;
     private float time;
+    private bool isPlaying=true;
     // Start is called before the first frame update
     void Start()
     {
         forcePerSec = (maxForce - minForce) / maxTime;
+        EventManager.OnPVPResult += StopGame;
+        EventManager.OnPlayerDie += StopGame;
+        EventManager.OnContinue += Continue;
+
     }
 
+    private void StopGame(string arg1, int arg2)
+    {
+        isPlaying = false;
+    }
+    private void StopGame(int arg2)
+    {
+        isPlaying = false;
+    }
+    private void Continue()
+    {
+        isPlaying = true;
+    }
     // Update is called once per frame
     void Update()
     {
+        if (!isPlaying)
+            return;
+       
         float angle = 0;
         touch = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 
@@ -44,7 +65,7 @@ public class PlayerController : MonoBehaviour
             ball.transform.Rotate(0, 0, -newObjectAngle);
             Rigidbody2D RB;
             RB = ball.GetComponent<Rigidbody2D>();
-            Debug.Log(forcePerSec * time);
+
             RB.AddForce(ball.transform.up * (minForce + forcePerSec*time));
             time = 0;
         }
@@ -65,5 +86,11 @@ public class PlayerController : MonoBehaviour
         Vector3 relative = _transform.InverseTransformPoint(target);
         angle = Mathf.Atan2(relative.x, relative.y) * Mathf.Rad2Deg;
         return angle;
+    }
+    private void OnDestroy()
+    {
+        EventManager.OnPVPResult -= StopGame;
+        EventManager.OnPlayerDie -= StopGame;
+        EventManager.OnContinue -= Continue;
     }
 }

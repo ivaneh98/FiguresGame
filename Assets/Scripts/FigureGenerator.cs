@@ -18,17 +18,46 @@ public class FigureGenerator : MonoBehaviour
     private float delay=3f;
     private float delayBonus=15f;
     private float y, z;
-
+    [SerializeField]
+    private bool isMuliplayer= false;
+    private bool isPlay=true;
     // Start is called before the first frame update
     void Start()
     {
         y = leftBorder.transform.position.y;
         z = leftBorder.transform.position.z;
+        if (!isMuliplayer)
+        {
+            StartCoroutine(DelayedSpawn());
+            StartCoroutine(DelayedSpawnBonus());
+            EventManager.OnPlayerDie += StopGenerator;
+            EventManager.OnContinue += Continue;
+
+
+        }
+        else
+        {
+            EventManager.OnDelayedSpawn += SpawnInMultiplayer;
+            EventManager.OnPVPResult += StopGenerator;
+        }
+    }
+
+    private void Continue()
+    {
+        isPlay = true;
+
         StartCoroutine(DelayedSpawn());
         StartCoroutine(DelayedSpawnBonus());
     }
 
-
+    private void StopGenerator(string arg1, int arg2)
+    {
+        Destroy(gameObject);
+    }
+    private void StopGenerator(int arg2)
+    {
+        isPlay=false;
+    }
     void Spawn()
     {
         int id = Random.Range(0, figures.Length);
@@ -37,10 +66,18 @@ public class FigureGenerator : MonoBehaviour
             new Vector3(x,y,z),
             Quaternion.identity);
     }
+    void SpawnInMultiplayer(int id, float position)
+    {
+        float x = rightBorder.transform.position.x - (Vector2.Distance(new Vector2(rightBorder.transform.position.x, 0),
+             new Vector2(leftBorder.transform.position.x, 0)) * position);
 
+        GameObject obj = Instantiate(figures[id],
+            new Vector3(x, y, z),
+            Quaternion.identity);
+    }
     IEnumerator DelayedSpawn()
     {
-        while (true)
+        while (isPlay)
         {
             Spawn();
             yield return new WaitForSeconds(delay);
@@ -48,12 +85,19 @@ public class FigureGenerator : MonoBehaviour
     }
     IEnumerator DelayedSpawnBonus()
     {
-        while (true)
+        while (isPlay)
         {
             yield return new WaitForSeconds(delayBonus);
             Instantiate(bonusFigure,
                 bonusSpawnPosition.transform.position,
                 Quaternion.identity);
         }
+    }
+    private void OnDestroy()
+    {
+        EventManager.OnDelayedSpawn -= SpawnInMultiplayer;
+        EventManager.OnPVPResult -= StopGenerator;
+        EventManager.OnPlayerDie -= StopGenerator;
+
     }
 }

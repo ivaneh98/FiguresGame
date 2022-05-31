@@ -12,6 +12,7 @@ public class Ball : MonoBehaviour
             Destroy(gameObject);
         else if (collision.collider.CompareTag("Enemy"))
         {
+            EventManager.SendEnemyKilled();
             Destroy(collision.gameObject);
             Destroy(gameObject);
         }
